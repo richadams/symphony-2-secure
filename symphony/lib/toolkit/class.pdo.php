@@ -142,7 +142,7 @@ class MySQL
         }
         catch (PDOException $e)
         {
-            $this->__error($e->getCode(), $e->getMessvage());
+            $this->__error($e->getCode(), $e->getMessage());
             return false;
         }
         return true;
