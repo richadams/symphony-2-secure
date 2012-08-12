@@ -1,6 +1,6 @@
 # Symphony 2 PDO #
 
-This is a modification to the Symphony 2 CMS to use PDO in place of `mysql_*` functions. It uses prepared statements whenever possible and it /should be/ backwards compatible with all current code. 
+This is a modification to the Symphony 2 CMS to use PDO in place of `mysql_*` functions. It uses prepared statements whenever possible and it *should be* backwards compatible with all current code. 
 
 *Here's what's bad and why I'm changing it:*
 
