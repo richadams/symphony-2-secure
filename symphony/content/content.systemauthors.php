@@ -476,7 +476,7 @@
 				$this->_Author->set('first_name', General::sanitize($fields['first_name']));
 				$this->_Author->set('last_name', General::sanitize($fields['last_name']));
 				$this->_Author->set('last_seen', NULL);
-				$this->_Author->set('password', (trim($fields['password']) == '' ? '' : General::hash($fields['password'])));
+				$this->_Author->setPassword(trim($fields['password']));
 				$this->_Author->set('default_area', $fields['default_area']);
 				$this->_Author->set('auth_token_active', ($fields['auth_token_active'] ? $fields['auth_token_active'] : 'no'));
 				$this->_Author->set('language', $fields['language']);
@@ -533,7 +533,7 @@
 				if($fields['email'] != $this->_Author->get('email')) $changing_email = true;
 
 				// Check the old password was correct
-				if(isset($fields['old-password']) && strlen(trim($fields['old-password'])) > 0 && General::hash(trim($fields['old-password'])) == $this->_Author->get('password')) {
+				if(isset($fields['old-password']) && strlen(trim($fields['old-password'])) > 0 && $this->_Author->verifyPassword(trim($fields['old-password']))) {
 					$authenticated = true;
 				}
 				// Developers don't need to specify the old password, unless it's their own account
@@ -557,7 +557,7 @@
 				$this->_Author->set('language', $fields['language']);
 
 				if(trim($fields['password']) != ''){
-					$this->_Author->set('password', General::hash($fields['password']));
+					$this->_Author->setPassword(trim($fields['password']));
 					$changing_password = true;
 				}
 

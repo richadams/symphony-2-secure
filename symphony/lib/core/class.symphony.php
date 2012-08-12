@@ -335,8 +335,8 @@
 
 		/**
 		 * Attempts to log an Author in given a username and password.
-		 * If the password is not hashed, it will be hashed using the sha1
-		 * algorithm. The username and password will be sanitized before
+		 * If the password is not hashed, it will be salted and hashed using crypt().
+		 * The username and password will be sanitized before
 		 * being used to query the Database. If an Author is found, they
 		 * will be logged in and the sanitized username and password (also hashed)
 		 * will be saved as values in the `$Cookie`.
@@ -353,24 +353,28 @@
 		 *  True if the Author was logged in, false otherwise
 		 */
 		public function login($username, $password, $isHash=false){
-
+			// Clean username, no need to clean password as it goes straight into crypt().
 			$username = self::Database()->cleanValue($username);
-			$password = self::Database()->cleanValue($password);
 
-			if(strlen(trim($username)) > 0 && strlen(trim($password)) > 0){
+			// Lookup user record and retrieve.
+			$id = false; $author = false;
+			if (strlen(trim($username)) > 0)
+			{
+				$id = self::Database()->fetchVar('id', 0, "SELECT `id` FROM `tbl_authors` WHERE `username` = '$username' LIMIT 1");
 
-				if(!$isHash) $password = General::hash($password);
+				if ($id) { $author = AuthorManager::fetchByID($id); }
+			}
 
-				$id = self::Database()->fetchVar('id', 0, "SELECT `id` FROM `tbl_authors` WHERE `username` = '$username' AND `password` = '$password' LIMIT 1");
-
-				if($id){
-					$this->Author = AuthorManager::fetchByID($id);
-					$this->Cookie->set('username', $username);
-					$this->Cookie->set('pass', $password);
-					self::Database()->update(array('last_seen' => DateTimeObj::get('Y-m-d H:i:s')), 'tbl_authors', " `id` = '$id'");
-
-					return true;
-				}
+			// If we have a valid user record and password.
+			if ($id
+				&& $author
+				&& $author->verifyPassword($password))
+			{
+				$this->Author = $author;
+				$this->Cookie->set('username', $username);
+				$this->Cookie->set('pass', $author->get("password"));
+				self::Database()->update(array('last_seen' => DateTimeObj::get('Y-m-d H:i:s')), 'tbl_authors', " `id` = '$id'");
+				return true;
 			}
 
 			return false;
