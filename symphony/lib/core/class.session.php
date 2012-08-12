@@ -63,7 +63,7 @@
 					ini_set('session.save_handler', 'user');
 					ini_set('session.gc_maxlifetime', $lifetime);
 					ini_set('session.gc_probability', '1');
-					ini_set('session.gc_divisor', Symphony::Configuration()->get('session_gc_divisor', 'symphony'));
+					ini_set('session.gc_divisor', Symphony::Configuration()->get('gc_divisor', 'session'));
 				}
 
 				session_set_save_handler(
@@ -75,7 +75,14 @@
 					array('Session', 'gc')
 				);
 
-				session_set_cookie_params($lifetime, $path, ($domain ? $domain : self::getDomain()), false, $httpOnly);
+				// Setup the cookie parameters correctly
+				// Expiry, Path, Domain, HTTPS Only, HTTP Only, Name
+				session_set_cookie_params(strtotime(Symphony::Configuration()->get('lifetime', 'session')) - strtotime("now"),
+										  $path,
+										  ($domain ? $domain : self::getDomain()),
+										  Symphony::Configuration()->get('secure', 'session'),
+										  Symphony::Configuration()->get('http-only', 'session'));
+				session_name(Symphony::Configuration()->get('name', 'session'));
 
 				if(session_id() == ""){
 					if(headers_sent()){
@@ -197,6 +204,9 @@
 		 *  True if the Session was deleted successfully, false otherwise
 		 */
 		public static function destroy($id) {
+			// Clear and expire the session cookie on the client-side.
+			setcookie(Symphony::Configuration()->get('name', 'session'), "", 1);
+
 			return Symphony::Database()->query(
 				sprintf(
 					"DELETE FROM `tbl_sessions` WHERE `session` = '%s'",

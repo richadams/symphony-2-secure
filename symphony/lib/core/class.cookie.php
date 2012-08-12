@@ -154,11 +154,7 @@
 			if(!isset($_SESSION[$this->_index]) || !is_array($_SESSION[$this->_index]) || empty($_SESSION[$this->_index])) return;
 
 			unset($_SESSION[$this->_index]);
-
-			// Calling session_destroy triggers the Session::destroy function which removes the entire session
-			// from the database. To prevent logout issues between functionality that relies on $_SESSION, such
-			// as Symphony authentication or the Members extension, only delete the $_SESSION if it empty!
-			if(empty($_SESSION)) session_destroy();
+			session_destroy();
 		}
 
 	}
