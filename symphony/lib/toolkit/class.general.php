@@ -1322,4 +1322,31 @@
 
 			}
 		}
+
+		// This generates a secure nonce for authentication, etc.
+		public static function generateNonce($length = 20)
+		{
+			// Base64 encode some random binary data, and strip the "=" if there are any.
+			// A nonce should usually just be A-z0-9./ chars for crypt().
+			if (function_exists("openssl_random_pseudo_bytes"))
+			{
+				return str_replace("=", "", base64_encode(openssl_random_pseudo_bytes($length)));
+			}
+
+			// Fallback if openssl not available
+			if (is_readable("/dev/urandom"))
+			{
+				if (($handle = @fopen("/dev/urandom", "rb")) !== false)
+				{
+					$bytes = fread($handle, $length);
+					fclose($handle);
+					return str_replace("=", "", base64_encode($bytes));
+				}
+			}
+
+			// Fallback if /dev/urandom not readable.
+			$state = microtime();
+			for ($i = 0; $i < 1000; $i += 20) { $state = sha1(microtime() . $state); }
+			return str_replace("=", "", base64_encode(substr($state, 0, $length)));
+		}
 	}

@@ -256,4 +256,37 @@
 			}
 		}
 
+		// This validates that a password matches the user record
+		public function verifyPassword($password)
+		{
+			// Backwards compatible with old method.
+			$_hash = sha1($password);
+			if ($this->get("password") == $_hash)
+			{
+				// Upgrade to new method, only if it was a success.
+				$this->setPassword($password);
+			}
+
+			return (crypt($password, $this->get("password")) === $this->get("password"));
+		}
+
+		// This sets the user's password
+		function setPassword($password)
+		{
+			// When a user changes password, also re-generate a new salt.
+			$salt = General::generateNonce(16); // 16 is max allowed in $6$ crypt.
+
+			// SHA512 with 100,000 iterations.
+			$crypted =  crypt($password, '$6$rounds=100000$'.$salt.'$');
+
+			// Could also use something like Blowfish with cost of 12, etc.
+			//$crypted = crypt($password, '$2a$12$'.$salt.'$');
+
+			// If less than 13 chars, then crypt failed!
+			if (strlen($crypted) < 13) { return false; }
+
+			$this->set("password", $crypted);
+			$this->commit();
+		}
+
 	}
