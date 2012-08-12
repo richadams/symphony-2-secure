@@ -365,8 +365,8 @@
 
 				if($id){
 					$this->Author = AuthorManager::fetchByID($id);
-					$this->Cookie->set('username', $username);
-					$this->Cookie->set('pass', $password);
+					$this->Cookie->set('uid', $id);
+					$this->Cookie->set('logged_in', true);
 					self::Database()->update(array('last_seen' => DateTimeObj::get('Y-m-d H:i:s')), 'tbl_authors', " `id` = '$id'");
 
 					return true;
@@ -422,8 +422,8 @@
 
 			if($row){
 				$this->Author = AuthorManager::fetchByID($row['id']);
-				$this->Cookie->set('username', $row['username']);
-				$this->Cookie->set('pass', $row['password']);
+				$this->Cookie->set('uid', $row['id']);
+				$this->Cookie->set('logged_in', true);
 				self::Database()->update(array('last_seen' => DateTimeObj::getGMT('Y-m-d H:i:s')), 'tbl_authors', " `id` = '$id'");
 
 				return true;
@@ -459,30 +459,30 @@
 			if ($this->Author){
 				return true;
 			}
-			else{
+			else
+			{
+				if (!$this->Cookie->get("logged_in"))
+				{
+					// If not logged in, clear cookie (and session)
+					$this->Cookie->expire();
+					return false;
+				}
+				else
+				{
+					// User is logged in, lookup the database record to do some updates
+					$id = intval($this->Cookie->get("uid")); // intval sanitizes to integer data
 
-				$username = self::Database()->cleanValue($this->Cookie->get('username'));
-				$password = self::Database()->cleanValue($this->Cookie->get('pass'));
-
-				if(strlen(trim($username)) > 0 && strlen(trim($password)) > 0){
-
-					$id = self::Database()->fetchVar('id', 0, "SELECT `id` FROM `tbl_authors` WHERE `username` = '$username' AND `password` = '$password' LIMIT 1");
-
-					if($id){
+					if ($id)
+					{
 						self::Database()->update(array('last_seen' => DateTimeObj::get('Y-m-d H:i:s')), 'tbl_authors', " `id` = '$id'");
 						$this->Author = AuthorManager::fetchByID($id);
 
 						// Only set custom author language in the backend
-						if(class_exists('Administration')) {
-							Lang::set($this->Author->get('language'));
-						}
-
-						return true;
+						if(class_exists('Administration')) { Lang::set($this->Author->get('language')); }
 					}
-				}
 
-				$this->Cookie->expire();
-				return false;
+					return true;
+				}
 			}
 		}
 
