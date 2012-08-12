@@ -149,8 +149,12 @@ class MySQL
     }
 
     // Select a MySQL database. Doesn't perform a SELECT query, despite the name.
-    // Not needed with PDO, this is set at connection time.
-    public function select($db = null) {}
+    public function select($db = null)
+    {
+        if ($db == null) return;
+        $this->query("USE :db", "",
+                     array("db" => $db));
+    }
 
     // Set the char encoding for sending/receiving data. UTF-8 assumed.
     // No needed with PDO, this is set at connection time. Providing code anyway.
