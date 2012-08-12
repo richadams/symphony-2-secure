@@ -469,8 +469,6 @@
 			{
 				if (!$this->Cookie->get("logged_in"))
 				{
-					// If not logged in, clear cookie (and session)
-					$this->Cookie->expire();
 					return false;
 				}
 				else
