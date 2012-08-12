@@ -105,14 +105,90 @@
 		 */
 		private function __init() {
 			$this->_session = Session::start($this->_timeout, $this->_path, $this->_domain, $this->_httpOnly);
+
+			// If wasn't created, exit early.
 			if (!$this->_session) return false;
 
+			// If session is empty, init to empty array.
 			if (!isset($_SESSION[$this->_index])) $_SESSION[$this->_index] = array();
+
+			// Init and validate that the session isn't suspicious
+			$this->initialize();
+			if (!$this->validate())
+			{
+				$this->expire();
+				return false;
+			}
+
+			// Update user's last activity time
+			$_SESSION[$this->_index]["_user_last_active"] = time();
 
 			// Class FrontendPage uses $_COOKIE directly (inside it's __buildPage() function), so try to emulate it.
 			$_COOKIE[$this->_index] = &$_SESSION[$this->_index];
 
 			return $this->_session;
+		}
+
+		// This sets up some flags we'll use to determine if the session becomes suspicious. This
+		// only needs to be setup when the session is initially created.
+		private function initialize()
+		{
+			// Need some way to determine when session ACTUALLY got created, as opposed to just started.
+			if (!isset($_SESSION[$this->_index]["_sym"]))
+			{
+				// Session was just created, so store it's start time and last activity time.
+				$_SESSION[$this->_index]["_start_time"]       = time();
+				$_SESSION[$this->_index]["_user_last_active"] = time();
+
+				// So I know the server generated the session
+				$_SESSION[$this->_index]["_sym"] = true;
+
+				// Store a browser signature into the session so we can check on subsequent requests.
+				// Use hash since we don't want to deal with privacy concerns.
+				$_SESSION[$this->_index]["_user_signature"] = sha1($_SERVER['HTTP_USER_AGENT']
+					.$_SERVER['HTTP_ACCEPT_ENCODING']
+					.$_SERVER['HTTP_ACCEPT_LANGUAGE']
+					.$_SERVER['HTTP_ACCEPT_CHARSET']);
+
+				// Only use the first two blocks of the IP (loose IP check). Use a
+				// netmask of 255.255.0.0 to get the first two blocks only.
+				$_SESSION[$this->_index]["_user_loose_ip"] = long2ip(ip2long($_SERVER['REMOTE_ADDR'])
+					& ip2long("255.255.0.0"));
+			}
+		}
+
+		// This will validate a session to make sure it's not suspicious. We immediately destroy
+		// any suspicious sessions.
+		private function validate()
+		{
+			// Validate Session Origin
+			// Check that this application created the session.
+			if (!isset($_SESSION[$this->_index]["_sym"]))
+			{
+				return false;
+			}
+
+			// Suspicious Sessions
+			if ($_SESSION[$this->_index]["_user_loose_ip"]     != long2ip(ip2long($_SERVER['REMOTE_ADDR'])
+					& ip2long("255.255.0.0"))
+				|| $_SESSION[$this->_index]["_user_signature"] != sha1($_SERVER['HTTP_USER_AGENT']
+					.$_SERVER['HTTP_ACCEPT_ENCODING']
+					.$_SERVER['HTTP_ACCEPT_LANGUAGE']
+					.$_SERVER['HTTP_ACCEPT_CHARSET']))
+			{
+				return false;
+			}
+
+			// Validate Duration
+			// Time validation check. Expire sessions after a lifetime or inactivity time.
+			// Whichever comes first. Times can be set in config
+			if ($_SESSION[$this->_index]["_start_time"] < (strtotime("-" . Symphony::Configuration()->get('lifetime', 'session')))
+			|| $_SESSION[$this->_index]["_user_last_active"] < (strtotime("-" . Symphony::Configuration()->get('inactive_time', 'session'))))
+			{
+				return false;
+			}
+
+			return true;
 		}
 
 		/**
@@ -153,12 +229,9 @@
 		public function expire() {
 			if(!isset($_SESSION[$this->_index]) || !is_array($_SESSION[$this->_index]) || empty($_SESSION[$this->_index])) return;
 
+			// Clear the session on the server side.
 			unset($_SESSION[$this->_index]);
-
-			// Calling session_destroy triggers the Session::destroy function which removes the entire session
-			// from the database. To prevent logout issues between functionality that relies on $_SESSION, such
-			// as Symphony authentication or the Members extension, only delete the $_SESSION if it empty!
-			if(empty($_SESSION)) session_destroy();
+			session_destroy();
 		}
 
 	}
