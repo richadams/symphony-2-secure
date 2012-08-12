@@ -369,6 +369,9 @@
 					$this->Cookie->set('logged_in', true);
 					self::Database()->update(array('last_seen' => DateTimeObj::get('Y-m-d H:i:s')), 'tbl_authors', " `id` = '$id'");
 
+					// Force regeneration of session ID, as privileges have been raised.
+					session_regenerate_id(true);
+
 					return true;
 				}
 			}
@@ -425,6 +428,9 @@
 				$this->Cookie->set('uid', $row['id']);
 				$this->Cookie->set('logged_in', true);
 				self::Database()->update(array('last_seen' => DateTimeObj::getGMT('Y-m-d H:i:s')), 'tbl_authors', " `id` = '$id'");
+
+				// Force regeneration of session ID, as privileges have been raised.
+				session_regenerate_id(true);
 
 				return true;
 			}
