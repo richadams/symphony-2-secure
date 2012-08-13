@@ -11,6 +11,7 @@ Feature branches:
   * `pdo` - This modifies the database interaction to use PDO prepared statements instead of `mysql_*` based functions. It is backwards compatible.
   * `passwords` - This modifies password storage so it uses `crypt()` instead of plain SHA1 hashes. It is backwards compatible, so any users with current SHA1 passwords will be upgraded to the new method on their next login.
   * `sessions` - Various changes to the session management to prevent session fixation, destroy suspicious sessions, remove password hash from being stored in session, etc.
+  * `xsrf` - Adds XSRF/CSRF (Cross-site Request Forgery) protection to the admin area. This just adds a git submodule pointing to my respository for the extension (https://github.com/richadams/xsrf_protection).
 
 **Why?**
 
@@ -115,3 +116,26 @@ You will need to make the following database change to support the longer passwo
     ALTER TABLE `sym_authors` MODIFY COLUMN `password` VARCHAR(150)  CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL;
 
 Tested in v2.3, but use at your own risk!
+
+-----
+
+# XSRF #
+
+Branch: `xsrf`
+
+This adds the `xsrf_protection` extension from my other repository (https://github.com/richadams/xsrf_protection) as a default extension.
+
+**Here's what's bad and why I'm changing it:**
+
+  * The admin area has no form of XSRF/CSRF protection.
+
+**Here's what's changed:**
+
+  * All backend POST forms will now have a nonce value added to the inputs. Any POST request will be checked for a valid value, and those without a valid value will be rejected.
+
+You will need to add the following to your configuration file,
+  
+        "xsrf-protection" => array("token-lifetime"               => "15 mins", // How long the tokens are valid for.
+                                   "invalidate-tokens-on-request" => true),     // If true, then tokens are invalidated on every request or after expiry time, whichever is first. If false, tokens only expire after the lifetime.
+
+Tested with v2.3, but use at your own risk!
