@@ -1,6 +1,6 @@
 # Symphony CMS Secure #
 
-This is an attempt to modify Symphony CMS v2 to make it more secure. My changes are managed on a few different branches,
+This is an attempt to modify Symphony CMS to make it more secure. My changes are managed on a few different branches,
 
 Main branch:
 
@@ -8,8 +8,8 @@ Main branch:
 
 Feature branches:
 
-  * `pdo` - This modifies the database interaction to use PDO prepared statements instead of `mysql_*` based functions. It is backwards compatible.
-  * `passwords` - This modifies password storage so it uses `crypt()` instead of plain SHA1 hashes. It is backwards compatible, so any users with current SHA1 passwords will be upgraded to the new method on their next login.
+  * `pdo` - Changing the database interaction to use PDO prepared statements instead of `mysql_*` based functions. It is backwards compatible.
+  * `passwords` - Modifications to password storage so it uses `crypt()` instead of plain SHA1 hashes. It is backwards compatible, so any users with current SHA1 passwords will be upgraded to the new method on their next login.
   * `sessions` - Various changes to the session management to prevent session fixation, destroy suspicious sessions, remove password hash from being stored in session, etc.
   * `xsrf` - Adds XSRF/CSRF (Cross-site Request Forgery) protection to the admin area. This just adds a git submodule pointing to my respository for the extension (https://github.com/richadams/xsrf_protection).
 
@@ -19,11 +19,11 @@ Why not?
 
 **Can I replace my Symphony CMS install with this version?**
 
-Sure, but fair warning, you should be aware that there may well be bugs, so I'd advise against putting this into a production environment without reviewing the code change first. Use at your own risk, etc.
+Sure, but fair warning, you should be aware that there may well be bugs, so I'd advise against putting this into a production environment without reviewing the code changes first. Use at your own risk, etc.
 
 See https://github.com/symphonycms/symphony-2 for instructions on how to install and use Symphony CMS.
 
-Here's a description of each change that's been made.
+Here's a description of each change that's been made,
 
 -----
 
@@ -119,7 +119,7 @@ Tested in v2.3, but use at your own risk!
 
 -----
 
-# XSRF #
+# XSRF Protection #
 
 Branch: `xsrf`
 
